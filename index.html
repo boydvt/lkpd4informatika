@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kuis Seni Rupa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* Anti copas */
+    body {
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0c3fc, #8ec5fc);
+    }
+    /* Supaya smooth scroll di iOS */
+    #quiz-container {
+      -webkit-overflow-scrolling: touch;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Form Nama & Kelas -->
+  <div id="start-screen" class="text-center space-y-4 w-full max-w-md">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-purple-700">Kuis Informatika💻🖱️</h1>
+    <input id="nama" type="text" placeholder="Masukkan Nama" class="px-4 py-3 rounded-xl border w-full text-center text-base sm:text-lg">
+    <input id="kelas" type="text" placeholder="Masukkan Kelas" class="px-4 py-3 rounded-xl border w-full text-center text-base sm:text-lg">
+    <button onclick="startQuiz()" class="px-6 py-3 w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-bold shadow hover:scale-105 transition text-base sm:text-lg">Mulai</button>
+  </div>
+
+  <!-- Kontainer Kuis -->
+  <div id="quiz-container" class="hidden max-w-3xl w-full bg-white/90 backdrop-blur p-4 sm:p-6 rounded-2xl shadow-xl space-y-6 overflow-y-auto max-h-screen">
+    <h2 class="text-xl sm:text-2xl font-bold text-center text-purple-700 mb-4">Jawab Semua Pertanyaan</h2>
+    <div id="questions" class="space-y-6"></div>
+    <button onclick="finishQuiz()" class="w-full py-3 bg-purple-600 text-white rounded-xl shadow hover:scale-105 transition font-bold text-base sm:text-lg">Selesai</button>
+  </div>
+
+  <!-- Overlay Skor Akhir -->
+  <div id="score-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50 h-screen">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-10 text-center w-11/12 max-w-lg animate-fadeIn">
+      <h2 class="text-2xl sm:text-4xl font-bold text-gray-700 mb-2" id="playerName"></h2>
+      <h3 class="text-lg sm:text-2xl text-gray-500 mb-6" id="playerClass"></h3>
+      <div class="text-[70px] sm:text-[120px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-lg mb-6 leading-none" id="finalScore"></div>
+      <p class="text-xl sm:text-3xl font-semibold" id="motivasi"></p>
+      <button onclick="resetQuiz()" class="mt-8 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition w-full sm:w-auto">Coba Lagi</button>
+    </div>
+  </div>
+
+<script>
+  // Daftar soal (30 soal)
+const questions = [
+  {q: "Konsep utama dalam berpikir komputasional yang melibatkan penyederhanaan masalah dengan mengabaikan detail yang tidak penting disebut…", options: ["Pola","Abstraksi","Algoritma","Simulasi","Analisis"], answer: 1},
+  {q: "Tahapan berpikir komputasional yang mencari kesamaan dari beberapa masalah agar dapat menemukan solusi umum adalah…", options: ["Abstraksi","Pola","Algoritma","Simulasi","Generalisasi"], answer: 4},
+  {q: "Algoritma dalam berpikir komputasional berarti…", options: ["Menghafal masalah","Urutan langkah-langkah penyelesaian masalah","Menyederhanakan masalah","Mencari pola yang rumit","Mengulang proses berulang kali"], answer: 1},
+  {q: "Jika kita membuat resep memasak mie instan, maka resep tersebut merupakan contoh…", options: ["Simulasi","Pola","Algoritma","Abstraksi","Debugging"], answer: 2},
+  {q: "Berikut yang merupakan contoh penerapan dekomposisi adalah…", options: ["Membagi tugas membersihkan rumah menjadi menyapu, mengepel, dan merapikan barang","Membuat resep kue","Mengabaikan detail warna baju ketika menghitung jumlah siswa","Mencari kesamaan bentuk antara lingkaran dan bola","Mengulang langkah sampai jawaban benar"], answer: 0},
+  {q: "Simulasi komputer berguna untuk…", options: ["Mempercepat perhitungan manual","Menguji kondisi nyata tanpa risiko langsung","Menghapus algoritma","Menghindari abstraksi","Mengganti perangkat keras"], answer: 1},
+  {q: "Apa yang dimaksud dengan debugging?", options: ["Mencari kesalahan pada algoritma dan memperbaikinya","Membuat pola dari data","Membagi masalah besar menjadi kecil","Menyusun langkah penyelesaian masalah","Mengabaikan detail kecil"], answer: 0},
+  {q: "Contoh nyata berpikir komputasional dalam kehidupan sehari-hari adalah…", options: ["Menghafalkan semua nama siswa dalam kelas","Membagi waktu belajar menjadi beberapa sesi dengan jadwal tertentu","Mengingat warna baju teman satu per satu","Membiarkan masalah tanpa diselesaikan","Menyimpan data tanpa diolah"], answer: 1},
+  {q: "Jika siswa membuat flowchart langkah-langkah login ke aplikasi, maka siswa sedang menerapkan…", options: ["Abstraksi","Simulasi","Algoritma","Pola","Debugging"], answer: 2},
+  {q: "Mengabaikan detail nomor rumah ketika mencari alamat berdasarkan nama jalan adalah contoh dari…", options: ["Pola","Abstraksi","Dekomposisi","Algoritma","Debugging"], answer: 1},
+  {q: "Tujuan utama berpikir komputasional adalah…", options: ["Mengganti komputer dengan manusia","Melatih otot tangan","Menyelesaikan masalah secara sistematis dan efisien","Menghafal data","Membuat perangkat keras"], answer: 2},
+  {q: "Dalam berpikir komputasional, pola yang berulang bisa digunakan untuk…", options: ["Membuat masalah lebih sulit","Menyusun solusi umum","Menghilangkan langkah algoritma","Menambah kerumitan","Mengabaikan masalah"], answer: 1},
+  {q: "Simulasi lalu lintas di kota menggunakan komputer bertujuan untuk…", options: ["Membuat data tidak akurat","Mengetahui perilaku lalu lintas tanpa mencoba di jalan nyata","Menghindari algoritma","Menyimpan memori komputer","Menghapus pola"], answer: 1},
+  {q: "Langkah pertama dalam berpikir komputasional untuk menyelesaikan masalah besar adalah…", options: ["Debugging","Pola","Dekomposisi","Abstraksi","Simulasi"], answer: 2},
+  {q: "Algoritma yang baik memiliki ciri-ciri berikut, kecuali…", options: ["Efisien","Langkahnya jelas","Dapat diulang","Tidak memiliki tujuan","Tersusun logis"], answer: 3},
+
+  // Sistem komputer
+  {q: "Sistem komputer terdiri dari tiga komponen utama, yaitu…", options: ["Hardware, Software, Brainware","Input, Output, Printer","Hardware, CPU, Monitor","Software, Data, Keyboard","Program, Data, Kabel"], answer: 0},
+  {q: "Perangkat yang berfungsi sebagai otak komputer adalah…", options: ["Harddisk","Monitor","CPU","Keyboard","Flashdisk"], answer: 2},
+  {q: "Software yang berfungsi untuk mengatur kerja perangkat keras disebut…", options: ["Application software","Programming language","Operating system","Antivirus","Utility"], answer: 2},
+  {q: "Berikut yang termasuk perangkat input adalah…", options: ["Monitor","Speaker","Keyboard","Printer","Proyektor"], answer: 2},
+  {q: "Contoh perangkat output adalah…", options: ["Mouse","Scanner","Printer","Keyboard","Joystick"], answer: 2},
+  {q: "Brainware dalam sistem komputer berarti…", options: ["Perangkat keras","Perangkat lunak","Pengguna komputer","Data yang diproses","Sistem operasi"], answer: 2},
+  {q: "RAM pada komputer digunakan untuk…", options: ["Penyimpanan permanen","Menyimpan data sementara saat program dijalankan","Menyimpan sistem operasi secara permanen","Menyimpan data pada harddisk","Menampilkan data di layar"], answer: 1},
+  {q: "Harddisk merupakan contoh…", options: ["Perangkat input","Perangkat output","Perangkat penyimpanan sekunder","Perangkat pengolah data","Perangkat sementara"], answer: 2},
+  {q: "BIOS pada komputer berfungsi untuk…", options: ["Menghapus sistem operasi","Mengatur komunikasi dasar antara hardware dan software","Menyimpan data pengguna","Menampilkan gambar di monitor","Mencetak dokumen"], answer: 1},
+  {q: "Contoh perangkat lunak aplikasi adalah…", options: ["Windows","Linux","Microsoft Word","BIOS","Android"], answer: 2},
+  {q: "Sistem komputer tidak dapat berjalan tanpa…", options: ["Hardware saja","Software saja","Brainware saja","Hardware, Software, dan Brainware","Internet"], answer: 3},
+  {q: "Fungsi utama CPU adalah…", options: ["Menyimpan data","Mengolah data","Menampilkan output","Menghubungkan jaringan","Menyediakan listrik"], answer: 1},
+  {q: "Alat yang berfungsi menghubungkan komputer ke jaringan internet adalah…", options: ["Flashdisk","Router","Scanner","Printer","Monitor"], answer: 1},
+  {q: "Contoh sistem operasi adalah…", options: ["Chrome","Facebook","Windows","WhatsApp","Excel"], answer: 2},
+  {q: "Data yang dimasukkan ke dalam komputer disebut…", options: ["Output","Input","Storage","Processing","Program"], answer: 1}
+
+
+  ];
+
+  let score = 0, playerNama = "", playerKelas = "";
+
+  function startQuiz() {
+    playerNama = document.getElementById("nama").value || "Anonim";
+    playerKelas = document.getElementById("kelas").value || "-";
+    document.getElementById("start-screen").classList.add("hidden");
+    document.getElementById("quiz-container").classList.remove("hidden");
+    renderQuestions();
+  }
+
+  function renderQuestions() {
+    let container = document.getElementById("questions");
+    container.innerHTML = "";
+    questions.forEach((q, index) => {
+      let opts = q.options.map((opt, i) =>
+        `<label class="block px-3 py-2 rounded-xl border cursor-pointer hover:bg-purple-100 text-sm sm:text-base">
+          <input type="radio" name="q${index}" value="${i}" class="mr-2"> ${opt}
+        </label>`).join("");
+      container.innerHTML += `
+        <div class="p-3 sm:p-4 bg-white rounded-xl shadow">
+          <p class="font-semibold mb-2 text-sm sm:text-base">${index+1}. ${q.q}</p>
+          ${opts}
+        </div>`;
+    });
+  }
+
+  function finishQuiz() {
+    score = 0;
+    questions.forEach((q, i) => {
+      let selected = document.querySelector(`input[name="q${i}"]:checked`);
+      if (selected && parseInt(selected.value) === q.answer) score += 100 / questions.length;
+    });
+    score = Math.round(score);
+    showFinalScore();
+  }
+
+  function showFinalScore() {
+    document.getElementById("quiz-container").classList.add("hidden");
+    document.getElementById("playerName").textContent = playerNama;
+    document.getElementById("playerClass").textContent = "Kelas " + playerKelas;
+    document.getElementById("finalScore").textContent = score;
+
+    let motivasi = "";
+    if (score === 100) motivasi = "Selamat, pertahankan terus ya!";
+    else if (score > 50) motivasi = "Baguuus!";
+    else if (score > 20) motivasi = "Semangat dicari lagi yg salahnya!";
+    else motivasi = "Ayo gengs!";
+    document.getElementById("motivasi").textContent = motivasi;
+
+    document.getElementById("score-overlay").classList.remove("hidden");
+    startConfetti();
+  }
+
+  function resetQuiz() {
+    score = 0;
+    document.getElementById("score-overlay").classList.add("hidden");
+    document.getElementById("start-screen").classList.remove("hidden");
+  }
+
+  // Konfeti animasi
+  function startConfetti() {
+    var duration = 3 * 1000;
+    var end = Date.now() + duration;
+    (function frame() {
+      confetti({particleCount: 5, angle: 60, spread: 55, origin: {x: 0}});
+      confetti({particleCount: 5, angle: 120, spread: 55, origin: {x: 1}});
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
+</script>
+</body>
+</html>
