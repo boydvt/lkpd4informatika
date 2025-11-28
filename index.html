@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ulangan Harian Informatika</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* Anti copas */
+    body {
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0c3fc, #8ec5fc);
+    }
+
+    /* Supaya smooth scroll di iOS */
+    #quiz-container {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Form Nama & Kelas -->
+  <div id="start-screen" class="text-center space-y-4 w-full max-w-md">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-purple-700">Ulangan Harian Informatika💻🖱️</h1>
+    <input id="nama" type="text" placeholder="Masukkan Nama"
+      class="px-4 py-3 rounded-xl border w-full text-center text-base sm:text-lg">
+    <input id="kelas" type="text" placeholder="Masukkan Kelas"
+      class="px-4 py-3 rounded-xl border w-full text-center text-base sm:text-lg">
+    <button onclick="startQuiz()"
+      class="px-6 py-3 w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-bold shadow hover:scale-105 transition text-base sm:text-lg">Mulai</button>
+  </div>
+
+  <!-- Kontainer Kuis -->
+  <div id="quiz-container"
+    class="hidden max-w-3xl w-full bg-white/90 backdrop-blur p-4 sm:p-6 rounded-2xl shadow-xl space-y-6 overflow-y-auto max-h-screen">
+    <h2 class="text-xl sm:text-2xl font-bold text-center text-purple-700 mb-4">Jawab Semua Pertanyaan</h2>
+    <div id="questions" class="space-y-6"></div>
+    <button onclick="finishQuiz()"
+      class="w-full py-3 bg-purple-600 text-white rounded-xl shadow hover:scale-105 transition font-bold text-base sm:text-lg">Selesai</button>
+  </div>
+
+  <!-- Overlay Skor Akhir -->
+  <div id="score-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50 h-screen">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-10 text-center w-11/12 max-w-lg animate-fadeIn">
+      <h2 class="text-2xl sm:text-4xl font-bold text-gray-700 mb-2" id="playerName"></h2>
+      <h3 class="text-lg sm:text-2xl text-gray-500 mb-6" id="playerClass"></h3>
+      <div
+        class="text-[70px] sm:text-[120px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-lg mb-6 leading-none"
+        id="finalScore"></div>
+      <p class="text-xl sm:text-3xl font-semibold" id="motivasi"></p>
+      <button onclick="resetQuiz()"
+        class="mt-8 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition w-full sm:w-auto">Coba
+        Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    // Daftar soal (30 soal)
+    const questions =
+      // Daftar soal (30 soal)
+      [
+        { q: "Kemampuan memecah masalah besar menjadi bagian-bagian kecil disebut …", options: ["Abstraksi", "Algoritma", "Dekomposisi", "Debugging"], answer: 2 },
+        { q: "Mengambil bagian penting dan mengabaikan detail yang tidak diperlukan disebut …", options: ["Abstraksi", "Dekomposisi", "Algoritma", "Simulasi"], answer: 0 },
+        { q: "Serangkaian langkah untuk menyelesaikan masalah disebut …", options: ["Debugging", "Algoritma", "Pattern Recognition", "Pemodelan"], answer: 1 },
+        { q: "Proses menemukan kesalahan dalam suatu program disebut …", options: ["Debugging", "Abstraksi", "Algoritma", "Simulasi"], answer: 0 },
+        { q: "Mencari pola yang berulang dari suatu masalah disebut …", options: ["Pattern Recognition", "Algoritma", "Pemodelan", "Dekomposisi"], answer: 0 },
+        { q: "Contoh berpikir komputasional dalam kehidupan sehari-hari adalah …", options: ["Membaca buku", "Bermain game", "Membuat resep masakan", "Menonton TV"], answer: 2 },
+        { q: "Tahap melakukan penyempurnaan agar solusi menjadi lebih efisien disebut …", options: ["Debugging", "Optimasi", "Simulasi", "Eksekusi"], answer: 1 },
+        { q: "Urutan instruksi yang harus dilakukan komputer disebut …", options: ["Output", "Algoritma", "Sintaks", "Command"], answer: 1 },
+        { q: "Berpikir komputasional terutama digunakan untuk …", options: ["Mengetik cepat", "Memecahkan masalah kompleks", "Menggambar", "Menyanyi"], answer: 1 },
+        { q: "Mewakili peristiwa dunia nyata dalam bentuk sederhana disebut …", options: ["Simulasi", "Abstraksi", "Dekomposisi", "Debugging"], answer: 1 },
+        { q: "Langkah awal yang dilakukan saat menghadapi masalah besar adalah …", options: ["Mencari pola", "Dekomposisi", "Debugging", "Optimasi"], answer: 1 },
+        { q: "Perbaikan algoritma agar lebih cepat disebut …", options: ["Optimasi", "Simulasi", "Pattern Recognition", "Dekomposisi"], answer: 0 },
+        { q: "Berikut yang bukan bagian dari berpikir komputasional adalah …", options: ["Algoritma", "Pattern Recognition", "Dekomposisi", "Koneksi Internet"], answer: 3 },
+        { q: "Simulasi digunakan untuk …", options: ["Menyederhanakan masalah nyata", "Mendeteksi virus komputer", "Menambah memori", "Mempercepat jaringan"], answer: 0 },
+        { q: "Contoh pola berulang yang dapat dikenali adalah …", options: ["Tata surya", "Jadwal harian", "Gambar acak", "Nomor undian"], answer: 1 },
+        { q: "Bagian komputer yang berfungsi sebagai otak komputer adalah …", options: ["RAM", "CPU", "SSD", "GPU"], answer: 1 },
+        { q: "RAM berfungsi untuk …", options: ["Penyimpanan permanen", "Penyimpanan sementara", "Mengontrol jaringan", "Menampilkan gambar"], answer: 1 },
+        { q: "Perangkat yang digunakan untuk menampilkan output adalah …", options: ["Mouse", "Keyboard", "Monitor", "Scanner"], answer: 2 },
+        { q: "Perangkat yang termasuk input device adalah …", options: ["Printer", "Monitor", "Keyboard", "Speaker"], answer: 2 },
+        { q: "Sistem operasi berfungsi untuk …", options: ["Menghapus virus", "Menghubungkan user dengan hardware", "Membersihkan file", "Mempercepat internet"], answer: 1 },
+        { q: "Contoh sistem operasi adalah …", options: ["Chrome", "Windows", "Photoshop", "Google"], answer: 1 },
+        { q: "Bagian komputer yang menyimpan data secara permanen adalah …", options: ["RAM", "SSD/HDD", "CPU", "Cache"], answer: 1 },
+        { q: "GPU berfungsi untuk …", options: ["Memproses grafis", "Memproses suara", "Mengatur memori", "Menyimpan file"], answer: 0 },
+        { q: "Perangkat yang berfungsi mencetak dokumen adalah …", options: ["Scanner", "Printer", "Monitor", "Keyboard"], answer: 1 },
+        { q: "BIOS digunakan untuk …", options: ["Mengatur booting awal", "Mencetak dokumen", "Menggambar", "Mengedit video"], answer: 0 },
+        { q: "Software yang digunakan untuk membuat dokumen teks disebut …", options: ["Hardware", "Utility", "Aplikasi", "Sistem Operasi"], answer: 2 },
+        { q: "Alat untuk memasukkan suara ke komputer adalah …", options: ["Speaker", "Microphone", "Monitor", "Printer"], answer: 1 },
+        { q: "File yang dapat dijalankan disebut …", options: ["Data", "Executable", "Folder", "Archive"], answer: 1 },
+        { q: "Mouse termasuk perangkat …", options: ["Input", "Output", "Proses", "Penyimpanan"], answer: 0 },
+        { q: "Kumpulan perangkat lunak yang digunakan untuk mengontrol perangkat keras disebut …", options: ["Firmware", "Hardware", "Software", "Driver"], answer: 3 },
+        { q: "Jaringan yang mencakup area kecil seperti sekolah disebut …", options: ["WAN", "LAN", "MAN", "PAN"], answer: 1 },
+        { q: "Perangkat yang menghubungkan beberapa komputer dalam LAN adalah …", options: ["Switch", "Modem", "Repeater", "Bridge"], answer: 0 },
+        { q: "Jaringan yang mencakup satu kota disebut …", options: ["PAN", "LAN", "MAN", "WAN"], answer: 2 },
+        { q: "Topologi yang paling sering digunakan di sekolah adalah …", options: ["Ring", "Bus", "Star", "Mesh"], answer: 2 },
+        { q: "Untuk terhubung ke internet, perangkat yang digunakan adalah …", options: ["Switch", "Router", "Access Point", "Repeater"], answer: 1 },
+        { q: "IP Address digunakan untuk …", options: ["Menyimpan file", "Mengidentifikasi perangkat dalam jaringan", "Mengirim email", "Mencetak dokumen"], answer: 1 },
+        { q: "Protokol untuk mengakses halaman web adalah …", options: ["FTP", "SMTP", "HTTP", "DNS"], answer: 2 },
+        { q: "DNS berfungsi untuk …", options: ["Mengirim email", "Mengubah nama domain menjadi IP", "Mengukur kecepatan internet", "Mengontrol firewall"], answer: 1 },
+        { q: "Contoh alamat IPv4 adalah …", options: ["abc.def", "192.168.1.1", "https://", "255.100"], answer: 1 },
+        { q: "Media transmisi nirkabel adalah …", options: ["UTP", "Fiber Optik", "Wi-Fi", "Coaxial"], answer: 2 },
+        { q: "Konektor kabel LAN adalah …", options: ["RJ-11", "RJ-45", "HDMI", "USB"], answer: 1 },
+        { q: "Repeater digunakan untuk …", options: ["Menyimpan data", "Memperkuat sinyal", "Menyaring virus", "Mengirim email"], answer: 1 },
+        { q: "Modem berfungsi untuk …", options: ["Mencetak dokumen", "Mengubah sinyal analog ke digital", "Mengatur daya", "Menambah bandwidth"], answer: 1 },
+        { q: "Topologi jaringan berbentuk melingkar adalah …", options: ["Bus", "Ring", "Star", "Mesh"], answer: 1 },
+        { q: "Access Point digunakan untuk …", options: ["Menguatkan cahaya", "Menghubungkan perangkat secara wireless", "Memfilter data", "Memperbarui software"], answer: 1 },
+        { q: "Jaringan pribadi dalam jarak sangat dekat seperti Bluetooth adalah …", options: ["WAN", "PAN", "LAN", "MAN"], answer: 1 },
+        { q: "Panjang maksimal kabel UTP kategori umum (Cat5e) sekitar …", options: ["50 m", "100 m", "250 m", "500 m"], answer: 1 },
+        { q: "Firewall digunakan untuk …", options: ["Mengedit video", "Melindungi jaringan dari ancaman", "Mempercepat download", "Menghubungkan Wi-Fi"], answer: 1 },
+        { q: "Server adalah …", options: ["Klien jaringan", "Perangkat yang menyediakan layanan", "Router kecil", "Pencetak data"], answer: 1 },
+        { q: "Bandwidth adalah …", options: ["Kecepatan transfer data", "Kapasitas harddisk", "Jenis kabel", "Ukuran RAM"], answer: 0 },
+
+      ];
+
+    let score = 0, playerNama = "", playerKelas = "";
+
+    function startQuiz() {
+      playerNama = document.getElementById("nama").value || "Anonim";
+      playerKelas = document.getElementById("kelas").value || "-";
+      document.getElementById("start-screen").classList.add("hidden");
+      document.getElementById("quiz-container").classList.remove("hidden");
+      renderQuestions();
+    }
+
+    function renderQuestions() {
+      let container = document.getElementById("questions");
+      container.innerHTML = "";
+      questions.forEach((q, index) => {
+        let opts = q.options.map((opt, i) =>
+          `<label class="block px-3 py-2 rounded-xl border cursor-pointer hover:bg-purple-100 text-sm sm:text-base">
+          <input type="radio" name="q${index}" value="${i}" class="mr-2"> ${opt}
+        </label>`).join("");
+        container.innerHTML += `
+        <div class="p-3 sm:p-4 bg-white rounded-xl shadow">
+          <p class="font-semibold mb-2 text-sm sm:text-base">${index + 1}. ${q.q}</p>
+          ${opts}
+        </div>`;
+      });
+    }
+
+    function finishQuiz() {
+      score = 0;
+      let answers = [];
+
+      questions.forEach((q, i) => {
+        let selected = document.querySelector(`input[name="q${i}"]:checked`);
+        let ans = selected ? parseInt(selected.value) : null;
+
+        answers.push({
+          nomor: i + 1,
+          soal: q.q,
+          jawabanUser: selected ? q.options[ans] : "-",
+          jawabanBenar: q.options[q.answer],
+          benar: ans === q.answer
+        });
+
+        if (ans === q.answer) score += 100 / questions.length;
+      });
+
+      score = Math.round(score);
+
+      // ========================================
+      // KIRIM DATA KE GOOGLE SHEETS
+      // ========================================
+      fetch("https://script.google.com/macros/library/d/1HrbxSnysUyifrT0Kq13idCX4e_L_t6jLvMD-wz_z2RGpU1oBp-mWugO0/1", {
+        method: "POST",
+        contentType: "application/json",
+        body: JSON.stringify({
+          nama: playerNama,
+          kelas: playerKelas,
+          score: score,
+          answers: answers
+        })
+      })
+        .then(res => console.log("Terkirim ke Spreadsheet"))
+        .catch(err => console.error(err));
+
+      // ========================================
+
+      showFinalScore();
+
+    }
+
+    function showFinalScore() {
+      document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("playerName").textContent = playerNama;
+      document.getElementById("playerClass").textContent = "Kelas " + playerKelas;
+      document.getElementById("finalScore").textContent = score;
+
+      let motivasi = "";
+      if (score === 100) motivasi = "Selamat, pertahankan terus ya!";
+      else if (score > 50) motivasi = "Baguuus!";
+      else if (score > 20) motivasi = "Semangat dicari lagi yg salahnya!";
+      else motivasi = "Ayo gengs!";
+      document.getElementById("motivasi").textContent = motivasi;
+
+      document.getElementById("score-overlay").classList.remove("hidden");
+      startConfetti();
+    }
+
+    function resetQuiz() {
+      score = 0;
+      document.getElementById("score-overlay").classList.add("hidden");
+      document.getElementById("start-screen").classList.remove("hidden");
+    }
+
+    // Konfeti animasi
+    function startConfetti() {
+      var duration = 3 * 1000;
+      var end = Date.now() + duration;
+      (function frame() {
+        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+    }
+  </script>
+</body>
+
+</html>
